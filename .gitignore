@@ -390,4 +390,5 @@ fibon/Repa/Sobel/out.bmp
 fibon/Repa/Volume/Volume
 fibon/Repa/Volume/out.bmp
 fibon/Repa/Volume/out.w16
-
+.stack-work/
+_make/
