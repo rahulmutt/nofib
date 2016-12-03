@@ -216,10 +216,12 @@ buildRules Build {..} = do
           x:_ -> "MAIN = " ++ x
     writeFileLines out $ mainMod : convertConfig src
 
-  "//*.jar" %> \jar ->
+  ["//*.jar", "//*.hi"] &%> \[jar, _] ->
     if takeFileName jar == "Out.jar"
     then do
       let out = jar
+      -- Generate dummy inteface file for Out
+      writeFile' (replaceExtension out "hi") ""
       deps <- readFile' $ replaceExtension out "deps"
       let os = nub [ if isLower $ head $ takeFileName x then replaceExtension out "jar" else output </> x
                     | x <- words deps, takeExtension x == ".jar"]
