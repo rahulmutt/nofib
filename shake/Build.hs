@@ -235,7 +235,7 @@ buildRules Build {..} = do
                 ++ name ++ " follows..."
       unit $ cmd compiler
         $ ["-Rghc-timing", "-rtsopts", "-shared", "-o", out]
-        ++ os ++ way ++ words (config "SRC_HC_OPTS")
+        ++ os ++ way ++ words (config "HC_OPTS")
       putNormal $ "==nofib== " ++ name ++ ": size of " ++ name ++ " follows..."
       sizeCmd [out]
     else do
@@ -257,7 +257,7 @@ buildRules Build {..} = do
       unit $ cmd compiler $
         [ "-Rghc-timing", "-c", src, "-w", "-i" ++ obj, "-odir=" ++ obj
         , "-hidir=" ++ obj ]
-        ++ way ++ words (config "SRC_HC_OPTS")
+        ++ way ++ words (config "HC_OPTS")
       putNormal $ "==nofib== " ++ name ++ ": size of "
               ++ takeFileName jar ++ " follows..."
       sizeCmd [jar]
@@ -267,7 +267,7 @@ buildRules Build {..} = do
     config <- readConfig' $ takeDirectory out </> "config.txt"
     unit $ cmd compiler $
       ["-w", "-M", dir </> config "MAIN", "-i" ++ dir, "-dep-makefile=" ++ out]
-      ++ words (config "SRC_HC_OPTS")
+      ++ words (config "HC_OPTS")
     src <- liftIO $ readFile out
     need [x | x <- words src, takeExtension x `elem` [".hs",".lhs",".h"]]
 
@@ -284,7 +284,7 @@ runTest nofib@Build {run = Just speed, ..} test = do
            in if s == "" then grab "stdin" else readFile $ test </> s
   -- stats <- IO.canonicalizePath $ output </> test </> "stat.txt"
   -- TODO: Make this work on windows too.
-  paths <- fmap (intercalate ":") $ defaultLibPaths nofib
+  paths <- fmap (intercalate ":") $ defaultLibPaths nofib config
   let classpath = paths ++ ":" ++ output </> test </> "Out.jar"
   fmap and $ replicateM times $ do
     start <- getCurrentTime
@@ -328,8 +328,9 @@ runTest nofib@Build {run = Just speed, ..} test = do
 convertConfig :: [String] -> [String]
 convertConfig xs = [remap a ++ " = " ++ b | x <- xs, let (a,b) = separate x, a `elem` keep]
     where
-        keep = words "PROG_ARGS SRC_HC_OPTS SRC_RUNTEST_OPTS SLOW_OPTS NORM_OPTS FAST_OPTS STDIN_FILE"
+        keep = words "PROG_ARGS SRC_HC_OPTS SRC_RUNTEST_OPTS SLOW_OPTS NORM_OPTS FAST_OPTS STDIN_FILE HC_OPTS"
         remap "SRC_RUNTEST_OPTS" = "PROG_ARGS"
+        remap "SRC_HC_OPTS" = "HC_OPTS"
         remap x = x
 
         separate x = (name,rest)
@@ -401,13 +402,21 @@ sizeCmd args = unit $ cmd "stat -f%z" args
 basePackages :: [String]
 basePackages = ["ghc-prim","integer","base", "rts"]
 
-defaultLibPaths :: Nofib -> IO [String]
-defaultLibPaths Build {..}= do
+defaultLibPaths :: Nofib -> (String -> String) -> IO [String]
+defaultLibPaths Build {..} config = do
+  let filterPackageFlags (package:rest)
+        | "-package" `isInfixOf` package
+        = head rest : filterPackageFlags (tail rest)
+        | otherwise
+        = filterPackageFlags rest
+      filterPackageFlags _ = []
+      extraPackages = filterPackageFlags $ words (config "HC_OPTS")
+      packages = nub (basePackages ++ extraPackages)
   libDir  <- fmap (\x -> x </> "lib") $ IO.getAppUserDataDirectory "epm"
   libDir' <- fmap (head . filter (tag `isInfixOf`))
            $ IO.getDirectoryContents libDir
   let packagesDir = libDir </> libDir'
-  packageDirs <- fmap (filter (\x -> any (`isInfixOf` x) basePackages))
+  packageDirs <- fmap (filter (\x -> any (`isInfixOf` x) packages))
                $ IO.getDirectoryContents packagesDir
   forM packageDirs $ \p -> do
     let packageDir = packagesDir </> p
