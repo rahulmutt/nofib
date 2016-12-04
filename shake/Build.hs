@@ -276,7 +276,7 @@ buildRules Build {..} = do
 runTest :: Nofib -> String -> IO Bool
 runTest nofib@Build {run = Just speed, ..} test = do
   putStrLn $ "==nofib== " ++ takeDirectory1 test ++ ": time to run "
-          ++ takeDirectory1 test ++ " follows..."
+          ++ takeFileName test ++ " follows..."
   config <- readConfig $ output </> test </> "config.txt"
   let args = words (config "PROG_ARGS")
          ++ words (config $ map toUpper (show speed) ++ "_OPTS")
