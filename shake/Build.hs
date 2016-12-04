@@ -278,7 +278,16 @@ runTest nofib@Build {run = Just speed, ..} test = do
   putStrLn $ "==nofib== " ++ takeDirectory1 test ++ ": time to run "
           ++ takeFileName test ++ " follows..."
   config <- readConfig $ output </> test </> "config.txt"
-  let args = words (config "PROG_ARGS")
+  let (jvmFlags, progArgs) = stackHeapFlags (words (config "PROG_ARGS"))
+      stackHeapFlags (x:xs)
+        | "-M" `isPrefixOf` x = (("-Xmx" ++ drop 2 x) : ys, zs)
+        | "-H" `isPrefixOf` x = (("-Xms" ++ drop 2 x) : ys, zs)
+        | "-K" `isPrefixOf` x = (("-Xss" ++ drop 2 x) : ys, zs)
+        | otherwise           = (ys, x:zs)
+        where (ys, zs) = stackHeapFlags xs
+      stackHeapFlags [] = ([], [])
+
+      args = progArgs
          ++ words (config $ map toUpper (show speed) ++ "_OPTS")
   stdin <- let s = config "STDIN_FILE"
            in if s == "" then grab "stdin" else readFile $ test </> s
@@ -292,7 +301,7 @@ runTest nofib@Build {run = Just speed, ..} test = do
       readProcessWithExitCodeAndWorkingDirectory
         "."
         "java"
-        (["-classpath", classpath, "eta.main"]
+        (["-classpath", classpath] ++ jvmFlags ++ ["eta.main"]
          ++ args ++ ("+RTS":rts)) -- ++ ["-t" ++ stats])
         stdin
     end <- getCurrentTime
