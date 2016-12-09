@@ -13,6 +13,7 @@ executable nofib-runner
                      , directory
                      , time
                      , process
+                     , containers
   hs-source-dirs:      shake
   default-language:    Haskell2010
   ghc-options:         -O2

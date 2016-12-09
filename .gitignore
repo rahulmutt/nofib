@@ -392,3 +392,5 @@ fibon/Repa/Volume/out.bmp
 fibon/Repa/Volume/out.w16
 .stack-work/
 _make/
+target/
+*.jar

@@ -11,6 +11,7 @@ import Control.Monad
 import Data.Char
 import Data.List
 import Data.Maybe
+import qualified Data.Map as M
 import Data.Time.Clock
 import qualified System.Directory as IO
 import System.Exit
@@ -30,7 +31,7 @@ import Development.Shake.FilePath
 
 -- | These are directories that contain tests.
 testRoots :: [String]
-testRoots = words "imaginary spectral real parallel spectral/hartel"
+testRoots = words "imaginary spectral real parallel spectral/hartel shootout"
 
 -- | These are tests that are under testRoots, but should be skipped (all are skipped by the Makefile system)
 disabledTests :: [String]
@@ -67,6 +68,7 @@ data Nofib =
     , output     :: String
     , run        :: Maybe Speed
     , rts        :: [String]
+    , jmh        :: [String]
     , times      :: Int
     , skip_check :: Bool }
   deriving (Data,Typeable,Show)
@@ -94,6 +96,7 @@ nofibMode = cmdArgsMode $ modes
                            &= help "Run the results (Fast,Norm,Slow)"
     , times      = 1       &= help "Number of times to run each test"
     , rts        = []      &= help "Which RTS options to pass when running"
+    , jmh        = []      &= help "Which JMH options to pass when running"
     , skip_check = False   &= help "Skip checking the results of the tests"
     } &= auto
       &= help "Build"
@@ -201,7 +204,18 @@ buildRules Build {..} = do
         let f x = if hasExtension x then f $ takeDirectory x else x
         in f $ takeDirectory $ drop (length output + 1) x
   want $ concat [ [s </> "Out" <.> "jar", s </> "config.txt"]
-                | t <- tests, let s = output </> t ]
+                | t <- tests, let s = output </> t ] ++ [jmhJar]
+
+  jmhJar %> \out -> do
+    let tmpDir  = "jmh/src/main/resources"
+        tmpFile = tmpDir </> "Main.hs"
+        outFile = tmpDir </> "Out.jar"
+        pomFile = "jmh/pom.xml"
+    writeFile' tmpFile "main = print (1 :: Int)"
+    unit $ cmd "eta" ["-o", outFile] tmpFile
+    getDirectoryFiles "jmh/src/main/java" ["//*.java"]
+    need [pomFile]
+    unit $ cmd "mvn" ["-f", pomFile] "clean" "install"
 
   "//config.txt" %> \out -> do
     let dir = unoutput out
@@ -278,7 +292,8 @@ runTest nofib@Build {run = Just speed, ..} test = do
   putStrLn $ "==nofib== " ++ takeDirectory1 test ++ ": time to run "
           ++ takeFileName test ++ " follows..."
   config <- readConfig $ output </> test </> "config.txt"
-  let (jvmFlags, progArgs) = stackHeapFlags (words (config "PROG_ARGS"))
+  let totalArgs = (words (config "PROG_ARGS") ++ ["+RTS"] ++ concat (map words rts))
+      (jvmFlags, progArgs) = stackHeapFlags totalArgs
       stackHeapFlags (x:xs)
         | "-M" `isPrefixOf` x = (("-Xmx" ++ drop 2 x) : ys, zs)
         | "-H" `isPrefixOf` x = (("-Xms" ++ drop 2 x) : ys, zs)
@@ -287,32 +302,44 @@ runTest nofib@Build {run = Just speed, ..} test = do
         where (ys, zs) = stackHeapFlags xs
       stackHeapFlags [] = ([], [])
 
-      args = progArgs
-         ++ words (config $ map toUpper (show speed) ++ "_OPTS")
+      args = words (config $ map toUpper (show speed) ++ "_OPTS") ++ progArgs
   stdin <- let s = config "STDIN_FILE"
            in if s == "" then grab "stdin" else readFile $ test </> s
-  -- stats <- IO.canonicalizePath $ output </> test </> "stat.txt"
+  let stats = output </> test </> "stats.txt"
   -- TODO: Make this work on windows too.
-  paths <- fmap (intercalate ":") $ defaultLibPaths nofib config
-  let classpath = paths ++ ":" ++ output </> test </> "Out.jar"
+  paths <- defaultLibPaths nofib config
+  let classpath = intercalate ":"
+                $ (output </> test </> "Out.jar")
+                : jmhJar : paths
+      rtsArgs = "args=" ++ intercalate " " args
+      jmhArgs' = words "-wi 5 -i 5 -bm ss -bs 1 -tu ms -foe true -f 1"
+              ++ concat (map words jmh)
+      jmhArgs = concat
+              $ map (\(arg, val) -> [arg, val])
+              $ M.toList
+              $ overrideJMH jmhArgs' M.empty
   fmap and $ replicateM times $ do
-    start <- getCurrentTime
-    (code, stdout, stderr) <-
+    (code, stdout', stderr') <-
       readProcessWithExitCodeAndWorkingDirectory
         "."
         "java"
-        (["-classpath", classpath] ++ jvmFlags ++ ["eta.main"]
-         ++ args ++ ("+RTS":rts)) -- ++ ["-t" ++ stats])
+        (["-classpath", classpath]
+         ++ jvmFlags
+         ++ ["org.openjdk.jmh.Main"]
+         ++ ["-p", rtsArgs]
+         ++ ["-o", stats]
+         ++ jmhArgs) -- -rff stats.csv
         stdin
-    end <- getCurrentTime
+    let stdout = getOutput stdout'
+        stderr = getOutput stderr'
     stdoutWant <- grab "stdout"
     stderrWant <- grab "stderr"
     writeFile (output </> test </> "stdout") stdout
     writeFile (output </> test </> "stderr") stderr
-    putStrLn $ show (floor
-                     $ fromRational
-                       (toRational $ end `diffUTCTime` start) * 1000) ++ "ms"
-    -- putStr =<< readFile stats
+    statsStr <- readFile stats
+    let statsLines = lines statsStr
+        statsLen   = length statsLines
+    putStr $ unlines $ drop (statsLen - 2) statsLines
     err <- return $
         if not skip_check && stderr /= stderrWant then
           "FAILED STDERR\nWANTED: " ++ snip stderrWant ++ "\nGOT: " ++ snip stderr
@@ -328,6 +355,18 @@ runTest nofib@Build {run = Just speed, ..} test = do
                   , test </> takeFileName test <.> ext]
           ss <- filterM IO.doesFileExist s
           maybe (return "") readFile $ listToMaybe ss
+        getOutput str
+          | "@OUT@" `isPrefixOf` str = fst . break (== '@') $ drop 5 str
+          | otherwise = str
+        overrideJMH args'@(arg:args)
+          | head arg == '-' =
+            case args of
+              (x:xs) -> if head x == '-'
+                        then overrideJMH args . M.insert arg ""
+                        else overrideJMH xs   . M.insert arg x
+              [] -> id
+          | otherwise = error $ "Bad JMH arguments: " ++ show args'
+        overrideJMH [] = id
 
 ---------------------------------------------------------------------
 -- CONFIGURATION UTILITIES
@@ -432,3 +471,6 @@ defaultLibPaths Build {..} config = do
     jar <- fmap (head . filter (".jar" `isSuffixOf`))
          $ IO.getDirectoryContents packageDir
     return $ packageDir </> jar
+
+jmhJar :: FilePath
+jmhJar = "jmh/target/benchmarks.jar"
