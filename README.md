@@ -47,9 +47,9 @@ Example:
 
 #### Replicating the results
 
-`$ nofib-runner spectral/circsim spectral/constraints shootout/pidigits imaginary/wheel-sieve1 --run`
+`$ nofib-runner spectral/circsim spectral/constraints shootout/pidigits imaginary/wheel-sieve1 spectral/lcss --run --way="-O2"`
 
-If you see any major differences, please report your results as an [issue] or on [Gitter](https://gitter.im/typelead/eta).
+If you see any major differences, please report your results as an [issue](https://github.com/rahulmutt/nofib/issues/new) or on [Gitter](https://gitter.im/typelead/eta).
 
 ### Benchmarks In Progress
 The following currently don't work in Eta:
