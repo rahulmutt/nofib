@@ -1,4 +1,4 @@
-From: Koen Claessen [mailto:koen@cs.chalmers.se] 
+From: Koen Claessen [mailto:koen@cs.chalmers.se]
 Sent: Wednesday, January 27, 1999 3:05 PM
 To: glasgow-haskell-bugs-outgoing@dcs.gla.ac.uk
 Subject: Possible bug
@@ -16,13 +16,13 @@ import System.Random
 import Data.List
 import System.IO
 import Control.Monad
-import IOExts
+import System.IO.Unsafe (unsafeInterleaveIO)
 
 type Process = [Integer] -> Bool
 
 -- added by SimonM
 randomRIOs :: Random a => (a,a) -> IO [a]
-randomRIOs rng 
+randomRIOs rng
   = do rs <- unsafeInterleaveIO (randomRIOs rng)
        r  <- randomRIO rng
        return (r:rs)
@@ -33,7 +33,7 @@ simulate n m proc =
   do tries <- sequence [ fmap proc (randomRIOs (1,m)) | _ <- [1..n] ]
      return (length (filter id tries) // n)
  where
-  n // m = fromInt n / fromInt m
+  n // m = fromIntegral n / fromIntegral m
 
 sim :: Int -> IO Double
 sim k = simulate 1000 100 proc
@@ -82,4 +82,3 @@ Koen Claessen,
 koen@cs.chalmers.se,
 http://www.cs.chalmers.se/~koen,
 Chalmers University of Technology.
-

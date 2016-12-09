@@ -35,11 +35,11 @@ testRoots = words "imaginary spectral real parallel spectral/hartel shootout"
 
 -- | These are tests that are under testRoots, but should be skipped (all are skipped by the Makefile system)
 disabledTests :: [String]
-disabledTests = words "hartel last-piece secretary triangle ebnf2ps HMMS PolyGP rx cfd dcbm linsolv warshall"
+disabledTests = []-- words "hartel ebnf2ps PolyGP rx cfd dcbm linsolv warshall"
 
 -- | These tests are compiled by the Makefile system, but don't work for me (mostly GHC 7.4 breaks)
 newlyDisabledTests :: [String]
-newlyDisabledTests = words "power lift fulsom fluid"
+newlyDisabledTests = []--words "lift fulsom fluid"
 
 -- | Directories containing tests that the system can run.
 allTests :: IO [FilePath]

@@ -1,8 +1,15 @@
 # Eta NoFib: Test & Benchmark Suite
 
-This is a set of benchmarks for functional languages, popularly known as `nofib`, that has been adapted for the Eta programming language.
+This is a set of benchmarks for functional languages, popularly known as `nofib`, that has been adapted for the Eta programming language. Moreover, the [Java Micobenchmarking Harness](http://openjdk.java.net/projects/code-tools/jmh/) is used to conduct the benchmarks over many iterations.
 
 ## Getting Started
+
+### Prerequisites
+- Maven
+- JDK 1.7+
+- Eta
+
+### Runner Installation
 
 First, install the runner:
 
@@ -36,6 +43,7 @@ Example:
 | spectral/constraints   | 15884 ms               | 2488 ms            |
 | shootout/pidigits      | 28 ms                  | 546 ms             |
 | imaginary/wheel-sieve1 | 7 ms                   | 318 ms             |
+| spectral/lcss          | 968 ms                 | 334 ms             |
 
 #### Replicating the results
 
@@ -54,10 +62,74 @@ The following currently don't work in Eta:
 - real/cacheprof - Error in build
 - spectral/cryptarithm1 - Hangs
 - spectral/integer - Hangs
-- real/hidden - Error in build
-- spectral/lcss - Test fails
-- real/scs - Exception at runtime
+- real/hidden - Throws an Eta exception: fromInp
+- real/scs - Throws an Eta exception: Prelude.undefined
 
-## Current Status
-
-Some of the tests are failing due to various reasons, but a good chunk of them work. Work is underway to tweak the build script to support all the tests.
+Other benchmarks that won't work by category:
+- imaginary
+  - gen_regexps - Hangs
+  - integrate - Wrong output
+  - kahan - Wrong output
+- spectral
+  - ansi - Hangs
+  - banner - Hangs
+  - boyer - Exception, probably due to unimplemented IO function
+  - cichelli - Exception, probably due to unimplemented IO function
+  - compreals - Runner can't match the program
+  - cryptarithm1 - Hangs
+  - cse - Exception, probably due to unimplemented IO function
+  - eliza - Hangs
+  - exact-reals - Hangs
+  - expert - Eta Exception, probably due to unimplemented IO function (File I/O)
+  - fft2 - Wrong output
+  - integer - Hangs
+  - mandel - Hangs
+  - mandel2 - Eta Exception, probably due to unimplemented IO function
+  - mate - Eta Exception, probably due to unimplemented IO function (File I/O)
+  - minimax - Eta Exception, probably due to unimplemented IO function
+  - multiplier - Selector Thunk bug
+  - para - Eta Exception, probably due to unimplemented IO function (File I/O)
+  - power - Eta Exception, probably due to unimplemented IO function
+  - pretty - Eta Exception, probably due to unimplemented IO function
+  - primetest - Hangs
+- spectral/hartel
+  - last-piece - Depends on `text` package
+  - nucleic2 - Wrong output
+  - transform - Exception, probably due to unimplemented IO function
+  - wave4main - Wrong output
+  - salishan - Runner can't match the program
+  - secretary - Issue with `time` library
+  - simple - Hangs
+  - sorting - Hangs
+  - sphere - Non-exhaustive patterns
+  - treejoin - SelectorThunk bug
+  - triangle - Depends on `FiniteMap` package
+- real
+  - HMMS - Broken build
+  - anna - Eta Exception, probably due to unimplemented IO function (File I/O)
+  - bspt - Exception, probably due to unimplemented IO function
+  - cacheprof - Broken pipe
+  - compress  - Hangs
+  - compress2 - Broken pipe
+  - ebnf2ps - Broken build
+  - fem - Hangs
+  - fluid - Hangs
+  - fulsom - Eta Exception: Prelude.read: no parse
+  - gamteb - Hangs
+  - gg - Hangs
+  - grep - Hangs
+  - hidden - Eta Exception: fromInp
+  - hpg - Wrong output
+  - infer - Hangs
+  - lift - SelectorThunk bug
+  - maillist - Hangs
+  - mkhprog - Wrong output
+  - parser - Hangs
+  - pic - Hangs
+  - prolog - Eta Exception, probably due to unimplemented IO function (File I/O)
+  - reptile - Hangs
+  - rsa - Hangs
+  - rx - Bad Main file
+  - scs - Eta Exception, probably due to unimplemented IO function (File I/O)
+  - symalg - Hangs
+  - veritas - Invalid argument for stdin
