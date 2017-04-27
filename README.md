@@ -72,7 +72,7 @@ Example:
 
 #### Replicating the results
 
-`$ nofib-runner spectral/circsim spectral/constraints shootout/pidigits imaginary/wheel-sieve1 spectral/lcss --run --way="-O2"`
+`$ ./eta-benchmarks.sh`
 
 If you see any major differences, please report your results as an [issue](https://github.com/rahulmutt/nofib/issues/new) or on [Gitter](https://gitter.im/typelead/eta).
 
@@ -108,6 +108,7 @@ Other benchmarks that won't work by category:
   - expert - Eta Exception, probably due to unimplemented IO function (File I/O)
   - fft2 - Wrong output
   - integer - Hangs
+  - last-piece - Depends on `text` package
   - mandel - Hangs
   - mandel2 - Eta Exception, probably due to unimplemented IO function
   - mate - Eta Exception, probably due to unimplemented IO function (File I/O)
@@ -117,11 +118,6 @@ Other benchmarks that won't work by category:
   - power - Eta Exception, probably due to unimplemented IO function
   - pretty - Eta Exception, probably due to unimplemented IO function
   - primetest - Hangs
-- spectral/hartel
-  - last-piece - Depends on `text` package
-  - nucleic2 - Wrong output
-  - transform - Exception, probably due to unimplemented IO function
-  - wave4main - Wrong output
   - salishan - Runner can't match the program
   - secretary - Issue with `time` library
   - simple - Hangs
@@ -129,8 +125,13 @@ Other benchmarks that won't work by category:
   - sphere - Non-exhaustive patterns
   - treejoin - SelectorThunk bug
   - triangle - Depends on `FiniteMap` package
+- spectral/hartel
+  - nucleic2 - Wrong output
+  - transform - Exception, probably due to unimplemented IO function
+  - wave4main - Wrong output
 - real
   - HMMS - Broken build
+  - PolyGP - Broken build
   - anna - Eta Exception, probably due to unimplemented IO function (File I/O)
   - bspt - Exception, probably due to unimplemented IO function
   - cacheprof - Broken pipe

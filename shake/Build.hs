@@ -460,6 +460,10 @@ defaultLibPaths Build {..} config = do
       filterPackageFlags _ = []
       extraPackages = filterPackageFlags $ words (config "HC_OPTS")
       packages = nub (basePackages ++ extraPackages)
+  searchForJars tag packages
+
+searchForJars :: String -> [String] -> IO [String]
+searchForJars tag packages = do
   libDir  <- fmap (\x -> x </> "lib") $ IO.getAppUserDataDirectory "epm"
   libDir' <- fmap (head . filter (tag `isInfixOf`))
            $ IO.getDirectoryContents libDir
