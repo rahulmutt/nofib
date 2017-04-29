@@ -35,6 +35,7 @@ import org.openjdk.jmh.annotations.*;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import eta.main;
+import eta.runtime.thunk.Thunk;
 
 @State(Scope.Benchmark)
 public class TestBenchmark {
@@ -44,14 +45,20 @@ public class TestBenchmark {
 
     String[] _args;
 
-    @Setup
+    @Setup(Level.Trial)
     public void setup() {
         _args = args.split(" ");
+        Thunk.setKeepCAFs();
     }
 
     @Benchmark
     public void benchmark() {
         System.out.print("@OUT@");
         eta.main.main(_args);
+    }
+
+    @TearDown(Level.Iteration)
+    public void tearDown() {
+        Thunk.revertCAFs();
     }
 }

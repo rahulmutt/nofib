@@ -464,7 +464,7 @@ defaultLibPaths Build {..} config = do
 
 searchForJars :: String -> [String] -> IO [String]
 searchForJars tag packages = do
-  libDir  <- fmap (\x -> x </> "lib") $ IO.getAppUserDataDirectory "epm"
+  libDir  <- fmap (\x -> x </> "lib") $ IO.getAppUserDataDirectory "etlas"
   libDir' <- fmap (head . filter (tag `isInfixOf`))
            $ IO.getDirectoryContents libDir
   let packagesDir = libDir </> libDir'

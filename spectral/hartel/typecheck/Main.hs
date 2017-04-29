@@ -75,9 +75,9 @@ where {
          } in  f_ap4 c_cnst_if r_map_test c_cnst_nil (f_ap3 c_cnst_cons r_map_head r_map_tail);
     c_prog_y::(T_vname,T_vexp);
     c_rhs_Y,c_body_Y::T_vexp;
-    c_prog_y=("y   ",F_LETRECE ((:) "Y" []) ((:) c_rhs_Y []) c_var_Y);
+    c_prog_y=("y   ",F_LETRECE ((:) "Y" []) ((:) c_rhs_Y []) c_var_Y0);
     c_rhs_Y=f_plambda ((:) "f" []) c_body_Y;
-    c_body_Y=f_ap2 c_var_f (f_ap2 c_var_Y c_var_f);
+    c_body_Y=f_ap2 c_var_f (f_ap2 c_var_Y0 c_var_f);
     c_prog_succ::(T_vname,T_vexp);
     c_body_succ::T_vexp;
     c_prog_succ=("succ",f_plambda ((:) "n" ((:) "a" ((:) "b" []))) c_body_succ);
@@ -104,10 +104,10 @@ where {
     c_cnst_one=F_VAR "1";
     c_cnst_tail=F_VAR "tail";
     c_cnst_zero=F_VAR "0";
-    c_var_K,c_var_S,c_var_Y,c_var_a,c_var_b,c_var_f,c_var_len,c_var_map,c_var_n,c_var_ones,c_var_sum,c_var_x,c_var_y,c_var_z::T_vexp;
+    c_var_K,c_var_S,c_var_Y0,c_var_a,c_var_b,c_var_f,c_var_len,c_var_map,c_var_n,c_var_ones,c_var_sum,c_var_x,c_var_y,c_var_z::T_vexp;
     c_var_K=F_VAR "K";
     c_var_S=F_VAR "S";
-    c_var_Y=F_VAR "Y";
+    c_var_Y0=F_VAR "Y";
     c_var_a=F_VAR "a";
     c_var_b=F_VAR "b";
     c_var_f=F_VAR "f";
