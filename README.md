@@ -1,6 +1,6 @@
 # Eta NoFib: Test & Benchmark Suite
 
-This is a set of benchmarks for functional languages, popularly known as `nofib`, that has been adapted for the Eta programming language.
+This is a set of benchmarks for functional languages, popularly known as `nofib`, that has been adapted for the Eta programming language. The actual benchmarks that are used to test the Eta compiler can be found in the [eta-benchmarks](https://github.com/typelead/eta-benchmarks) repo.
 
 ## Methodology
 The [Java Micobenchmarking Harness](http://openjdk.java.net/projects/code-tools/jmh/) is used to conduct the benchmarks. The follow process occurs when you run a benchmark:
